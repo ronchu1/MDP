@@ -1,4 +1,3 @@
-#Ron Lapushner ID 206455206 ronlapushner1@gmail.com 6.01.26
 import numpy as np
 import matplotlib.pyplot as plt
 import os

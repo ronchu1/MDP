@@ -4,7 +4,7 @@ import os
 import sys
 
 class MDP:
-    def __init__(self,gamma,board, rewards, fliename,p_success):                                       #instructor
+    def __init__(self,gamma,board, rewards, filename,p_success):                                       #instructor
         self.rows = board.shape[0]                       #rows
         self.columns = board.shape[1]                    #columns
         self.actions = ['UP', 'DOWN', 'LEFT', 'RIGHT']        #ACTIONS
@@ -32,15 +32,6 @@ class MDP:
         if self.board[row, column] == 0:
             return True
         return False
-
-    def display_values(self, values, iteration, filename):        #creates the graph images
-        maxAbsReward = np.max(np.abs(self.rewards))
-        plt.imshow(values, vmin=-maxAbsReward, vmax=maxAbsReward, cmap='seismic')
-        plt.title('Ron Lapushner, Value Iteration: ' + str(iteration))
-        plt.colorbar()
-        save_path = os.path.join('Results', 'ValueIteration_Values_RonLapushner.jpg')
-        plt.savefig(save_path)
-        plt.show()
 
     def get_transition_probabilities(self, state, action,p_success):  #gets a coordinate and a move
         row, col = state      #coordinate
@@ -82,7 +73,7 @@ class MDP:
         return list(transitions.items())                   #list of tuples from dict transitions to solve the equation
 
     def q_VALUE(self, state, action, current_values):      #our prestigious algorithm
-        transitions = self.get_transition_probabilities(state, action,p_success)
+        transitions = self.get_transition_probabilities(state, action,self.p_success)
         if not transitions:
             return -float('inf')
         q_VALUE = 0.0
@@ -95,7 +86,7 @@ class MDP:
 
     def value_iteration(self, epsilon=0.01, max_iterations=100):    #calculates in iterative way the utility for every situation,using the Belman equation
         U = np.zeros((self.rows, self.columns))
-        if(gamma!=0):
+        if(self.gamma!=0):
             stop_con = epsilon * (1 - self.gamma) / self.gamma
         else:
             stop_con=1e-6
@@ -301,26 +292,31 @@ class MDP:
         plt.close()
 
 
+def print_usage():                 #explains how to run the program
+    print("Usage: python MDP.py <input_file.npz> <ValueIteration|PolicyIteration>")
+
+
 if __name__ == '__main__':
-    filename = sys.argv[1]     #analyzing the terminal order
-    if len(sys.argv) == 3:
-        algorithm_type = sys.argv[2]
+    if len(sys.argv) != 3 or sys.argv[2] not in ('ValueIteration', 'PolicyIteration'):   #analyzing the terminal order
+        print_usage()
+        sys.exit(1)
+    filename = sys.argv[1]
+    algorithm_type = sys.argv[2]
     data = np.load(filename)  # file loading
     board = data['states']  # states matrix called board
     rewards = data['rewards']  # reward matrix called rewards
     gamma=0.9
     p_success = 0.8                 #possibility for success
     mdp_agent = MDP(gamma, board, rewards, filename,p_success) #creating the instance
-    if (len(sys.argv) == 3):
-        if (sys.argv[2] == 'ValueIteration'):      #if the terminal order is: python MDP.py input1_2026a.npz ValueIteration
-            U, iterations = mdp_agent.value_iteration()
-            policy = mdp_agent.extract_policy(U)
-            mdp_agent.save_value_image(U, iterations, "ValueIteration")
-            mdp_agent.save_policy_image(policy, "ValueIteration")
-            mdp_agent.display_policy(policy)
-        elif (sys.argv[2] == 'PolicyIteration'):    #if the terminal order is: python MDP.py input1_2026a.npz PolicyIteration
-            policy, U, iterations, eval_history = mdp_agent.policy_iteration()
-            mdp_agent.save_value_image(U, iterations, "PolicyIteration")
-            mdp_agent.save_policy_image(policy, "PolicyIteration")
-            mdp_agent.display_policy(policy)
-            mdp_agent.save_graph(eval_history)
+    if algorithm_type == 'ValueIteration':      #if the terminal order is: python MDP.py input1_2026a.npz ValueIteration
+        U, iterations = mdp_agent.value_iteration()
+        policy = mdp_agent.extract_policy(U)
+        mdp_agent.save_value_image(U, iterations, "ValueIteration")
+        mdp_agent.save_policy_image(policy, "ValueIteration")
+        mdp_agent.display_policy(policy)
+    else:                                       #if the terminal order is: python MDP.py input1_2026a.npz PolicyIteration
+        policy, U, iterations, eval_history = mdp_agent.policy_iteration()
+        mdp_agent.save_value_image(U, iterations, "PolicyIteration")
+        mdp_agent.save_policy_image(policy, "PolicyIteration")
+        mdp_agent.display_policy(policy)
+        mdp_agent.save_graph(eval_history)
